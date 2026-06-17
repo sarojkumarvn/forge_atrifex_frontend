@@ -1,0 +1,110 @@
+[
+  {
+    "id": 1,
+    "header": "Phoenix API stabilization",
+    "type": "Backend",
+    "status": "In Process",
+    "target": "82",
+    "limit": "18",
+    "reviewer": "Asha Mehta"
+  },
+  {
+    "id": 2,
+    "header": "Forge onboarding redesign",
+    "type": "Frontend",
+    "status": "Done",
+    "target": "96",
+    "limit": "4",
+    "reviewer": "Rohan Iyer"
+  },
+  {
+    "id": 3,
+    "header": "GitHub contribution sync",
+    "type": "Integration",
+    "status": "In Process",
+    "target": "74",
+    "limit": "21",
+    "reviewer": "Maya Singh"
+  },
+  {
+    "id": 4,
+    "header": "AI performance summaries",
+    "type": "AI Insight",
+    "status": "Done",
+    "target": "91",
+    "limit": "8",
+    "reviewer": "Asha Mehta"
+  },
+  {
+    "id": 5,
+    "header": "Deadline risk detector",
+    "type": "Analytics",
+    "status": "In Process",
+    "target": "68",
+    "limit": "32",
+    "reviewer": "Assign reviewer"
+  },
+  {
+    "id": 6,
+    "header": "Admin organization controls",
+    "type": "Platform",
+    "status": "Done",
+    "target": "89",
+    "limit": "11",
+    "reviewer": "Rohan Iyer"
+  },
+  {
+    "id": 7,
+    "header": "Team focus score model",
+    "type": "AI Insight",
+    "status": "In Process",
+    "target": "77",
+    "limit": "16",
+    "reviewer": "Maya Singh"
+  },
+  {
+    "id": 8,
+    "header": "Sprint progress forecasting",
+    "type": "Analytics",
+    "status": "Done",
+    "target": "93",
+    "limit": "7",
+    "reviewer": "Asha Mehta"
+  },
+  {
+    "id": 9,
+    "header": "Repository health audit",
+    "type": "Integration",
+    "status": "In Process",
+    "target": "71",
+    "limit": "19",
+    "reviewer": "Assign reviewer"
+  },
+  {
+    "id": 10,
+    "header": "Executive dashboard export",
+    "type": "Reporting",
+    "status": "In Process",
+    "target": "63",
+    "limit": "27",
+    "reviewer": "Rohan Iyer"
+  },
+  {
+    "id": 11,
+    "header": "Task ownership cleanup",
+    "type": "Operations",
+    "status": "Done",
+    "target": "98",
+    "limit": "2",
+    "reviewer": "Maya Singh"
+  },
+  {
+    "id": 12,
+    "header": "Review load balancing",
+    "type": "Team Health",
+    "status": "In Process",
+    "target": "79",
+    "limit": "22",
+    "reviewer": "Asha Mehta"
+  }
+]
