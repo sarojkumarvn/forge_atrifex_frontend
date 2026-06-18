@@ -68,6 +68,8 @@ import {
 } from "@/components/ui/sheet"
 import { AdminDashboard } from "@/components/admin-dashboard"
 import { AuthPage, DashboardNotFound } from "@/components/auth/auth-pages"
+import { TeamLeadDashboard } from "@/components/team-lead-dashboard"
+import { TeamMemberDashboard } from "@/components/team-member-dashboard"
 import { cn } from "@/lib/utils"
 
 import "./App.css"
@@ -329,6 +331,14 @@ function App() {
 
   if (currentPath === "/admin/dashboard") {
     return <AdminDashboard />
+  }
+
+  if (currentPath === "/tl/dashboard") {
+    return <TeamLeadDashboard />
+  }
+
+  if (currentPath === "/tm/dashboard") {
+    return <TeamMemberDashboard />
   }
 
   if (isDashboardPath(currentPath)) {
