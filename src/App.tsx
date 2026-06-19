@@ -329,15 +329,24 @@ function App() {
     setView("landing")
   }
 
-  if (currentPath === "/admin/dashboard") {
+  if (
+    currentPath === "/admin/dashboard" ||
+    currentPath.startsWith("/admin/dashboard/")
+  ) {
     return <AdminDashboard />
   }
 
-  if (currentPath === "/tl/dashboard") {
+  if (
+    currentPath === "/tl/dashboard" ||
+    currentPath.startsWith("/tl/dashboard/")
+  ) {
     return <TeamLeadDashboard />
   }
 
-  if (currentPath === "/tm/dashboard") {
+  if (
+    currentPath === "/tm/dashboard" ||
+    currentPath.startsWith("/tm/dashboard/")
+  ) {
     return <TeamMemberDashboard />
   }
 

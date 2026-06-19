@@ -1,20 +1,25 @@
 import type * as React from "react"
-import { useMemo, useState, type ComponentType } from "react"
+import { useEffect, useMemo, useState, type ComponentType } from "react"
 import {
   ActivityIcon,
   AlertTriangleIcon,
   BarChart3Icon,
   BriefcaseBusinessIcon,
+  CalendarClockIcon,
+  CheckCircle2Icon,
   ChevronDownIcon,
   CircleGaugeIcon,
   ClipboardListIcon,
   GitBranchIcon,
   LineChartIcon,
   MessageCircleIcon,
+  NetworkIcon,
   SearchIcon,
+  Settings2Icon,
   ShieldAlertIcon,
   SparklesIcon,
   TerminalIcon,
+  UserRoundIcon,
   UserRoundCheckIcon,
   UsersIcon,
 } from "lucide-react"
@@ -54,8 +59,15 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  DashboardProfilePage,
+  DashboardSettingsPage,
+  type DashboardUserProfile,
+} from "@/components/dashboard-profile-pages"
 import { Separator } from "@/components/ui/separator"
 import {
   Sidebar,
@@ -74,10 +86,22 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { toast } from "sonner"
 
 type TeamId = "team-1" | "team-2"
-type LeadSection = "dashboard" | "members" | "analytics" | "issues" | "tracks" | "reports"
+type LeadSection =
+  | "dashboard"
+  | "members"
+  | "analytics"
+  | "issues"
+  | "tracks"
+  | "reports"
+  | "task_distributor"
+  | "profile"
+  | "settings"
 type SidePanel = "messages" | "navigation"
 
 type TeamMember = {
@@ -113,10 +137,61 @@ type MessageItem = {
   teaser: string
 }
 
+type DistributedTask = {
+  id: string
+  member: string
+  project: string
+  task: string
+  instructions: string
+  deadline: string
+  children: { id: string; task: string; deadline: string }[]
+}
+
 const leadProfile = {
   name: "Riya Sen",
   email: "teamlead@atrifex.ai",
   avatar: "/avatars/team-lead.jpg",
+}
+
+const leadDashboardProfile: DashboardUserProfile = {
+  ...leadProfile,
+  initials: "RS",
+  position: "Team Lead",
+  team: "Forge Core",
+  employeeId: "AFX-TL-014",
+  lastActive: "Jun 20, 2026, 10:58 AM",
+  roleLabel: "Team Lead",
+  stats: [
+    { label: "Reports", value: "16" },
+    { label: "Tasks assigned", value: "34" },
+    { label: "Meetings", value: "08" },
+  ],
+  analyticsHistory: [
+    {
+      title: "Member workload analysis",
+      scope: "Forge Core team",
+      date: "Today, 9:50 AM",
+      result: "3 tasks redistributed",
+    },
+    {
+      title: "Task distributor report",
+      scope: "Forge Kernel",
+      date: "Yesterday, 5:15 PM",
+      result: "Sprint tree generated",
+    },
+    {
+      title: "Issue trend review",
+      scope: "Team 1 blockers",
+      date: "Jun 18, 2026",
+      result: "2 blockers escalated",
+    },
+    {
+      title: "Delivery health snapshot",
+      scope: "Manager Command Center",
+      date: "Jun 17, 2026",
+      result: "Release risk reduced",
+    },
+  ],
 }
 
 const teams = [
@@ -191,12 +266,89 @@ const projects = [
 
 const navItems = [
   { id: "dashboard", title: "Overview", icon: CircleGaugeIcon },
+  { id: "task_distributor", title: "Task distributor", icon: NetworkIcon },
   { id: "members", title: "Project teams", icon: UsersIcon },
   { id: "analytics", title: "Member analytics", icon: BarChart3Icon },
   { id: "issues", title: "Issues created", icon: ShieldAlertIcon },
   { id: "tracks", title: "Application track", icon: GitBranchIcon },
   { id: "reports", title: "Reports", icon: ClipboardListIcon },
 ] satisfies Array<{ id: LeadSection; title: string; icon: ComponentType }>
+
+const leadSectionPaths: Record<LeadSection, string> = {
+  dashboard: "/tl/dashboard",
+  members: "/tl/dashboard/members",
+  analytics: "/tl/dashboard/analytics",
+  issues: "/tl/dashboard/issues",
+  tracks: "/tl/dashboard/tracks",
+  reports: "/tl/dashboard/reports",
+  task_distributor: "/tl/dashboard/task_distributor",
+  profile: "/tl/dashboard/profile",
+  settings: "/tl/dashboard/settings",
+}
+
+const leadPathSections: Record<string, LeadSection> = {
+  "": "dashboard",
+  dashboard: "dashboard",
+  members: "members",
+  analytics: "analytics",
+  issues: "issues",
+  tracks: "tracks",
+  reports: "reports",
+  task_distributor: "task_distributor",
+  profile: "profile",
+  settings: "settings",
+}
+
+const leadSectionTitles: Record<LeadSection, string> = {
+  dashboard: "Overview",
+  members: "Project teams",
+  analytics: "Member analytics",
+  issues: "Issues created",
+  tracks: "Application track",
+  reports: "Reports",
+  task_distributor: "Task distributor",
+  profile: "Profile",
+  settings: "Settings",
+}
+
+const taskSeed: DistributedTask[] = [
+  {
+    id: "dist-1",
+    member: "Nolan Reed",
+    project: "Forge Kernel",
+    task: "Stabilize auth adapter",
+    instructions: "Review the OAuth proxy path, isolate the staging callback mismatch, and ship a tested adapter patch.",
+    deadline: "2026-07-02",
+    children: [
+      { id: "dist-1-a", task: "Trace staging callback failure", deadline: "2026-06-25" },
+      { id: "dist-1-b", task: "Patch adapter and add regression tests", deadline: "2026-06-29" },
+    ],
+  },
+  {
+    id: "dist-2",
+    member: "Isha Kapoor",
+    project: "Forge Kernel",
+    task: "Complete manager review UI",
+    instructions: "Finish the review queue screens, tighten empty states, and prepare the manager acceptance build.",
+    deadline: "2026-07-05",
+    children: [
+      { id: "dist-2-a", task: "Finish queue state coverage", deadline: "2026-06-27" },
+      { id: "dist-2-b", task: "Polish review handoff interactions", deadline: "2026-07-01" },
+    ],
+  },
+  {
+    id: "dist-3",
+    member: "Mateo Cruz",
+    project: "Forge Kernel",
+    task: "Build release validation pack",
+    instructions: "Create QA coverage for auth, review queue, and sprint-critical delivery paths before release hardening.",
+    deadline: "2026-07-08",
+    children: [
+      { id: "dist-3-a", task: "Write auth regression scenarios", deadline: "2026-06-28" },
+      { id: "dist-3-b", task: "Run release validation report", deadline: "2026-07-04" },
+    ],
+  },
+]
 
 const messages = [
   {
@@ -302,8 +454,28 @@ const issueConfig = {
   resolved: { label: "Resolved", color: "var(--chart-3)" },
 } satisfies ChartConfig
 
+function getLeadSectionFromPath(pathname: string): LeadSection {
+  const slug = pathname.replace(/^\/tl\/dashboard\/?/, "").split("/")[0]
+
+  return leadPathSections[slug] ?? "dashboard"
+}
+
+function pushLeadSection(section: LeadSection) {
+  const path = leadSectionPaths[section]
+
+  if (window.location.pathname !== path) {
+    window.history.pushState(null, "", path)
+  }
+}
+
 export function TeamLeadDashboard() {
-  const [section, setSection] = useState<LeadSection>("dashboard")
+  const [section, setSection] = useState<LeadSection>(() => {
+    if (typeof window === "undefined") {
+      return "dashboard"
+    }
+
+    return getLeadSectionFromPath(window.location.pathname)
+  })
   const [teamId, setTeamId] = useState<TeamId>("team-1")
   const [sidePanel, setSidePanel] = useState<SidePanel>("messages")
   const selectedTeam = teams.find((team) => team.id === teamId) ?? teams[0]
@@ -315,6 +487,21 @@ export function TeamLeadDashboard() {
     () => messages.filter((message) => message.team === teamId),
     [teamId]
   )
+
+  const handleSectionChange = (nextSection: LeadSection) => {
+    pushLeadSection(nextSection)
+    setSection(nextSection)
+  }
+
+  useEffect(() => {
+    const syncRoute = () => {
+      setSection(getLeadSectionFromPath(window.location.pathname))
+    }
+
+    window.addEventListener("popstate", syncRoute)
+
+    return () => window.removeEventListener("popstate", syncRoute)
+  }, [])
 
   return (
     <TooltipProvider>
@@ -331,7 +518,7 @@ export function TeamLeadDashboard() {
           activeTeam={teamId}
           activePanel={sidePanel}
           messages={teamMessages}
-          onSectionChange={setSection}
+          onSectionChange={handleSectionChange}
           onPanelChange={setSidePanel}
           onTeamChange={setTeamId}
         />
@@ -352,8 +539,14 @@ export function TeamLeadDashboard() {
             {section === "reports" && (
               <ReportsPanel projects={teamProjects} team={selectedTeam} />
             )}
+            {section === "task_distributor" && (
+              <TaskDistributorPanel projects={teamProjects} team={selectedTeam} />
+            )}
+            {section === "profile" && <DashboardProfilePage profile={leadDashboardProfile} />}
+            {section === "settings" && <DashboardSettingsPage profile={leadDashboardProfile} />}
           </main>
         </SidebarInset>
+        <Toaster position="top-right" />
       </SidebarProvider>
     </TooltipProvider>
   )
@@ -532,16 +725,49 @@ function TeamLeadSidebar({
           </>
         )}
         <SidebarFooter className="p-4">
-          <div className="flex items-center gap-3 rounded-xl bg-sidebar-accent p-2 text-sidebar-accent-foreground">
-            <Avatar className="size-9 rounded-lg">
-              <AvatarImage src={leadProfile.avatar} alt={leadProfile.name} />
-              <AvatarFallback className="rounded-lg">RS</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 text-sm">
-              <p className="truncate font-medium">{leadProfile.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{leadProfile.email}</p>
-            </div>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="flex w-full items-center gap-3 rounded-xl bg-sidebar-accent p-2 text-left text-sidebar-accent-foreground outline-none transition-transform duration-200 active:scale-[0.96] focus-visible:ring-3 focus-visible:ring-sidebar-ring/50"
+                type="button"
+              >
+                <Avatar className="size-9 rounded-lg">
+                  <AvatarImage src={leadProfile.avatar} alt={leadProfile.name} />
+                  <AvatarFallback className="rounded-lg">RS</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1 text-sm">
+                  <p className="truncate font-medium">{leadProfile.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{leadProfile.email}</p>
+                </div>
+                <Settings2Icon />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-(--radix-dropdown-menu-trigger-width) min-w-56">
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                  <Avatar className="size-9 rounded-lg">
+                    <AvatarImage src={leadProfile.avatar} alt={leadProfile.name} />
+                    <AvatarFallback className="rounded-lg">RS</AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-medium">{leadProfile.name}</span>
+                    <span className="truncate text-xs text-muted-foreground">{leadProfile.email}</span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onSelect={() => onSectionChange("profile")}>
+                  <UserRoundIcon />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => onSectionChange("settings")}>
+                  <Settings2Icon />
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </SidebarFooter>
       </Sidebar>
     </Sidebar>
@@ -549,7 +775,7 @@ function TeamLeadSidebar({
 }
 
 function TeamLeadHeader({ section, team }: { section: LeadSection; team: string }) {
-  const activeTitle = navItems.find((item) => item.id === section)?.title ?? "Overview"
+  const activeTitle = leadSectionTitles[section]
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-3 px-4 shadow-[0_1px_0_0_var(--border)] md:px-6">
@@ -862,6 +1088,238 @@ function ReportsPanel({ projects, team }: { projects: Project[]; team: (typeof t
         </Card>
       </TabsContent>
     </Tabs>
+  )
+}
+
+function TaskDistributorPanel({ projects, team }: { projects: Project[]; team: (typeof teams)[number] }) {
+  const primaryProject = projects[0]
+  const [prompt, setPrompt] = useState(
+    "Distribute the assigned manager project into focused tasks with clear ownership, staged deadlines, and review checkpoints."
+  )
+  const [tasks, setTasks] = useState<DistributedTask[]>(() =>
+    taskSeed.map((task, index) => {
+      const member = primaryProject?.members[index % primaryProject.members.length]
+
+      return {
+        ...task,
+        member: member?.name ?? task.member,
+        project: primaryProject?.name ?? task.project,
+      }
+    })
+  )
+  const [meetingDate, setMeetingDate] = useState("2026-06-24")
+  const [meetingTime, setMeetingTime] = useState("10:30")
+
+  const distributeTasks = () => {
+    if (!primaryProject) {
+      return
+    }
+
+    const deadlines = ["2026-06-28", "2026-07-02", "2026-07-06"]
+    const nextTasks = primaryProject.members.map((member, index) => ({
+      id: `ai-${member.avatar}-${index}`,
+      member: member.name,
+      project: primaryProject.name,
+      task: [
+        "Own delivery-critical backend slice",
+        "Ship interface and acceptance path",
+        "Validate release quality pack",
+      ][index % 3],
+      instructions: `${member.name} should work from ${primaryProject.name} context, report blockers daily, and keep the task aligned to the ${primaryProject.due} manager deadline.`,
+      deadline: deadlines[index % deadlines.length],
+      children: [
+        {
+          id: `ai-${member.avatar}-${index}-a`,
+          task: "Prepare implementation notes",
+          deadline: "2026-06-25",
+        },
+        {
+          id: `ai-${member.avatar}-${index}-b`,
+          task: "Submit review-ready work",
+          deadline: deadlines[index % deadlines.length],
+        },
+      ],
+    }))
+
+    setTasks(nextTasks)
+  }
+
+  const updateTask = (taskId: string, key: "task" | "instructions" | "deadline", value: string) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId ? { ...task, [key]: value } : task
+      )
+    )
+  }
+
+  const assignTasks = () => {
+    toast.success("Assigned successfully", {
+      description: `${tasks.length} member work plans were sent to ${team.name}.`,
+    })
+
+    window.setTimeout(() => {
+      pushLeadSection("dashboard")
+      window.dispatchEvent(new PopStateEvent("popstate"))
+    }, 900)
+  }
+
+  return (
+    <div className="grid min-h-0 gap-5 xl:grid-cols-[0.88fr_1.12fr]">
+      <div className="flex flex-col gap-5">
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardDescription>AI distributor</CardDescription>
+            <CardTitle className="text-balance">Project context chat</CardTitle>
+            <CardAction>
+              <Badge variant="secondary">{team.name}</Badge>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="rounded-xl bg-muted/25 p-4 shadow-[0_1px_0_rgba(255,255,255,0.06)_inset]">
+              <p className="text-sm font-medium">Assigned manager project</p>
+              <p className="mt-1 text-xl font-semibold text-balance">
+                {primaryProject?.name ?? "No active project"}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground text-pretty">
+                Manager: {primaryProject?.manager}. Due {primaryProject?.due}. Health {primaryProject?.health}%.
+              </p>
+            </div>
+            <div className="rounded-xl bg-background/70 p-4 shadow-[0_1px_0_rgba(255,255,255,0.06)_inset]">
+              <p className="text-sm font-medium">AtriFex AI</p>
+              <p className="mt-1 text-sm text-muted-foreground text-pretty">
+                I have the assigned project, current team members, progress, prior delivery signal, and deadline context. Generate the task tree, then edit any node before assigning.
+              </p>
+            </div>
+            <Textarea
+              className="min-h-28 resize-none"
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+            />
+            <Button className="transition-transform duration-200 active:scale-[0.96]" onClick={distributeTasks}>
+              <SparklesIcon data-icon="inline-start" />
+              Distribute tasks
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardDescription>Schedule</CardDescription>
+            <CardTitle className="text-balance">Team meeting</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-2 text-sm">
+              Meeting date
+              <input
+                className="h-9 rounded-lg border border-input bg-transparent px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                type="date"
+                value={meetingDate}
+                onChange={(event) => setMeetingDate(event.target.value)}
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm">
+              Time
+              <input
+                className="h-9 rounded-lg border border-input bg-transparent px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                type="time"
+                value={meetingTime}
+                onChange={(event) => setMeetingTime(event.target.value)}
+              />
+            </label>
+          </CardContent>
+          <CardFooter className="gap-2 text-sm text-muted-foreground">
+            <CalendarClockIcon />
+            Review meeting will be attached to the assignment report.
+          </CardFooter>
+        </Card>
+      </div>
+
+      <Card className="overflow-hidden">
+        <CardHeader>
+          <CardDescription>Generated report</CardDescription>
+          <CardTitle className="text-balance">Editable task tree</CardTitle>
+          <CardAction>
+            <Badge variant="outline">{tasks.length} owners</Badge>
+          </CardAction>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="rounded-xl bg-muted/25 p-4">
+            <p className="text-sm font-medium">Report summary</p>
+            <p className="mt-1 text-sm text-muted-foreground text-pretty">
+              {primaryProject?.name} is split by member capacity, current progress, review load, and manager deadline. Each owner has a primary task, child checkpoints, and an editable deadline.
+            </p>
+          </div>
+          <div className="flex max-h-[34rem] flex-col gap-3 overflow-auto pr-1">
+            {tasks.map((task) => (
+              <TaskTreeCard key={task.id} task={task} onChange={updateTask} />
+            ))}
+          </div>
+        </CardContent>
+        <CardFooter className="flex-col gap-3 sm:flex-row sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Meeting: {meetingDate} at {meetingTime}
+          </p>
+          <Button className="w-full transition-transform duration-200 active:scale-[0.96] sm:w-auto" onClick={assignTasks}>
+            <CheckCircle2Icon data-icon="inline-start" />
+            Assign tasks
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  )
+}
+
+function TaskTreeCard({
+  task,
+  onChange,
+}: {
+  task: DistributedTask
+  onChange: (taskId: string, key: "task" | "instructions" | "deadline", value: string) => void
+}) {
+  return (
+    <div className="rounded-xl bg-background/70 p-4 shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_18px_45px_rgba(0,0,0,0.12)]">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge>{task.member}</Badge>
+        <Badge variant="outline">{task.project}</Badge>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-[1fr_10rem]">
+        <label className="flex flex-col gap-2 text-sm">
+          Task
+          <input
+            className="h-9 rounded-lg border border-input bg-transparent px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            value={task.task}
+            onChange={(event) => onChange(task.id, "task", event.target.value)}
+          />
+        </label>
+        <label className="flex flex-col gap-2 text-sm">
+          Deadline
+          <input
+            className="h-9 rounded-lg border border-input bg-transparent px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            type="date"
+            value={task.deadline}
+            onChange={(event) => onChange(task.id, "deadline", event.target.value)}
+          />
+        </label>
+      </div>
+      <label className="mt-3 flex flex-col gap-2 text-sm">
+        Instructions
+        <Textarea
+          className="min-h-20 resize-none"
+          value={task.instructions}
+          onChange={(event) => onChange(task.id, "instructions", event.target.value)}
+        />
+      </label>
+      <div className="mt-4 flex flex-col gap-2 border-l border-border pl-4">
+        {task.children.map((child) => (
+          <div className="rounded-lg bg-muted/25 p-3" key={child.id}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium">{child.task}</p>
+              <span className="text-xs tabular-nums text-muted-foreground">{child.deadline}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 

@@ -10,12 +10,19 @@ import { CirclePlusIcon, MailIcon } from "lucide-react"
 
 export function NavMain({
   items,
+  activeItem,
+  onSelect,
+  onQuickCreate,
 }: {
   items: {
+    id: string
     title: string
     url: string
     icon?: React.ReactNode
   }[]
+  activeItem?: string
+  onSelect?: (item: string) => void
+  onQuickCreate?: () => void
 }) {
   return (
     <SidebarGroup>
@@ -24,7 +31,9 @@ export function NavMain({
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
               tooltip="Quick Create"
+              isActive={activeItem === "quick-create"}
               className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+              onClick={onQuickCreate}
             >
               <CirclePlusIcon
               />
@@ -44,7 +53,11 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
+              <SidebarMenuButton
+                tooltip={item.title}
+                isActive={activeItem === item.id}
+                onClick={() => onSelect?.(item.id)}
+              >
                 {item.icon}
                 <span>{item.title}</span>
               </SidebarMenuButton>

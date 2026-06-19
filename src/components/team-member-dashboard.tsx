@@ -1,5 +1,5 @@
 import type * as React from "react"
-import { useMemo, useState, type ComponentType } from "react"
+import { useEffect, useMemo, useState, type ComponentType } from "react"
 import {
   BotIcon,
   CalendarDaysIcon,
@@ -24,6 +24,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
+  DashboardProfilePage,
+  DashboardSettingsPage,
+  type DashboardUserProfile,
+} from "@/components/dashboard-profile-pages"
+import {
   Card,
   CardAction,
   CardContent,
@@ -47,6 +52,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
+import { Toaster } from "@/components/ui/sonner"
 import {
   Sidebar,
   SidebarContent,
@@ -81,6 +87,8 @@ type MemberView =
   | "tasks-remaining"
   | "calendar"
   | "history"
+  | "profile"
+  | "settings"
 
 type MemberTask = {
   title: string
@@ -112,6 +120,49 @@ const memberProfile = {
   avatar: "/avatars/member.jpg",
   initials: "NR",
   role: "Backend engineer",
+}
+
+const memberDashboardProfile: DashboardUserProfile = {
+  name: memberProfile.name,
+  email: memberProfile.email,
+  avatar: memberProfile.avatar,
+  initials: memberProfile.initials,
+  position: memberProfile.role,
+  team: "Forge Core",
+  employeeId: "AFX-TM-047",
+  lastActive: "Jun 20, 2026, 11:21 AM",
+  roleLabel: "Team Member",
+  stats: [
+    { label: "Tasks completed", value: "27" },
+    { label: "Issues resolved", value: "11" },
+    { label: "AI reviews", value: "19" },
+  ],
+  analyticsHistory: [
+    {
+      title: "Task progress analysis",
+      scope: "Forge Kernel",
+      date: "Today, 10:12 AM",
+      result: "2 tasks ahead of plan",
+    },
+    {
+      title: "Contribution review",
+      scope: "OAuth staging callback",
+      date: "Yesterday, 6:10 PM",
+      result: "Coverage improved",
+    },
+    {
+      title: "Issue resolution history",
+      scope: "Manager Command Center",
+      date: "Jun 18, 2026",
+      result: "Schema issue closed",
+    },
+    {
+      title: "AI feedback session",
+      scope: "Contribution mapper",
+      date: "Jun 17, 2026",
+      result: "Refactor notes saved",
+    },
+  ],
 }
 
 const tasks = [
@@ -230,8 +281,57 @@ const utilityNavigation = [
   { id: "history", title: "History", icon: HistoryIcon },
 ] satisfies Array<{ id: MemberView; title: string; icon: ComponentType }>
 
+const memberViewPaths: Record<MemberView, string> = {
+  "ask-ai": "/tm/dashboard/ask-ai",
+  home: "/tm/dashboard",
+  inbox: "/tm/dashboard/inbox",
+  "issues-created": "/tm/dashboard/issues-created",
+  "issues-resolved": "/tm/dashboard/issues-resolved",
+  "tasks-completed": "/tm/dashboard/tasks-completed",
+  "tasks-remaining": "/tm/dashboard/tasks-remaining",
+  calendar: "/tm/dashboard/calendar",
+  history: "/tm/dashboard/history",
+  profile: "/tm/dashboard/profile",
+  settings: "/tm/dashboard/settings",
+}
+
+const memberPathViews: Record<string, MemberView> = {
+  "": "home",
+  dashboard: "home",
+  "ask-ai": "ask-ai",
+  inbox: "inbox",
+  "issues-created": "issues-created",
+  "issues-resolved": "issues-resolved",
+  "tasks-completed": "tasks-completed",
+  "tasks-remaining": "tasks-remaining",
+  calendar: "calendar",
+  history: "history",
+  profile: "profile",
+  settings: "settings",
+}
+
+function getMemberViewFromPath(pathname: string): MemberView {
+  const slug = pathname.replace(/^\/tm\/dashboard\/?/, "").split("/")[0]
+
+  return memberPathViews[slug] ?? "home"
+}
+
+function pushMemberView(view: MemberView) {
+  const path = memberViewPaths[view]
+
+  if (window.location.pathname !== path) {
+    window.history.pushState(null, "", path)
+  }
+}
+
 export function TeamMemberDashboard() {
-  const [activeView, setActiveView] = useState<MemberView>("home")
+  const [activeView, setActiveView] = useState<MemberView>(() => {
+    if (typeof window === "undefined") {
+      return "home"
+    }
+
+    return getMemberViewFromPath(window.location.pathname)
+  })
   const remainingTasks = useMemo(
     () => tasks.filter((task) => task.status === "Remaining"),
     []
@@ -248,6 +348,20 @@ export function TeamMemberDashboard() {
     () => issues.filter((issue) => issue.status === "Resolved"),
     []
   )
+  const handleViewChange = (view: MemberView) => {
+    pushMemberView(view)
+    setActiveView(view)
+  }
+
+  useEffect(() => {
+    const syncRoute = () => {
+      setActiveView(getMemberViewFromPath(window.location.pathname))
+    }
+
+    window.addEventListener("popstate", syncRoute)
+
+    return () => window.removeEventListener("popstate", syncRoute)
+  }, [])
 
   return (
     <TooltipProvider>
@@ -265,7 +379,7 @@ export function TeamMemberDashboard() {
           createdIssueCount={createdIssues.length}
           remainingCount={remainingTasks.length}
           resolvedIssueCount={resolvedIssues.length}
-          onViewChange={setActiveView}
+          onViewChange={handleViewChange}
         />
         <SidebarInset className="overflow-hidden">
           <MemberHeader activeView={activeView} remainingCount={remainingTasks.length} />
@@ -295,8 +409,11 @@ export function TeamMemberDashboard() {
             )}
             {activeView === "calendar" && <CalendarPanel meetings={meetings} />}
             {activeView === "history" && <HistoryPanel />}
+            {activeView === "profile" && <DashboardProfilePage profile={memberDashboardProfile} />}
+            {activeView === "settings" && <DashboardSettingsPage profile={memberDashboardProfile} />}
           </main>
         </SidebarInset>
+        <Toaster position="top-right" />
       </SidebarProvider>
     </TooltipProvider>
   )
@@ -462,14 +579,14 @@ function MemberSidebar({
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <MemberUserMenu />
+        <MemberUserMenu onViewChange={onViewChange} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
 }
 
-function MemberUserMenu() {
+function MemberUserMenu({ onViewChange }: { onViewChange: (view: MemberView) => void }) {
   const { isMobile } = useSidebar()
 
   return (
@@ -512,11 +629,11 @@ function MemberUserMenu() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onViewChange("profile")}>
                 <UserRoundIcon />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onViewChange("settings")}>
                 <Settings2Icon />
                 Settings
               </DropdownMenuItem>
@@ -579,6 +696,8 @@ const viewLabels: Record<MemberView, string> = {
   "tasks-remaining": "Remaining tasks",
   calendar: "Calendar",
   history: "History",
+  profile: "Profile",
+  settings: "Settings",
 }
 
 function RemainingStrip({ tasks }: { tasks: MemberTask[] }) {

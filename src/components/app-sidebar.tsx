@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon } from "lucide-react"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, CommandIcon } from "lucide-react"
 
 const data = {
   user: {
@@ -23,6 +23,7 @@ const data = {
   },
   navMain: [
     {
+      id: "dashboard",
       title: "Dashboard",
       url: "#",
       icon: (
@@ -31,6 +32,7 @@ const data = {
       ),
     },
     {
+      id: "delivery-health",
       title: "Delivery Health",
       url: "#",
       icon: (
@@ -39,6 +41,7 @@ const data = {
       ),
     },
     {
+      id: "contribution-analytics",
       title: "Contribution Analytics",
       url: "#",
       icon: (
@@ -47,6 +50,7 @@ const data = {
       ),
     },
     {
+      id: "projects",
       title: "Projects",
       url: "#",
       icon: (
@@ -55,7 +59,17 @@ const data = {
       ),
     },
     {
+      id: "teams",
       title: "Teams",
+      url: "#",
+      icon: (
+        <UsersIcon
+        />
+      ),
+    },
+    {
+      id: "employees",
+      title: "Employee Directory",
       url: "#",
       icon: (
         <UsersIcon
@@ -148,6 +162,7 @@ const data = {
   ],
   documents: [
     {
+      id: "github-signals",
       name: "GitHub Signals",
       url: "#",
       icon: (
@@ -156,6 +171,7 @@ const data = {
       ),
     },
     {
+      id: "executive-reports",
       name: "Executive Reports",
       url: "#",
       icon: (
@@ -163,18 +179,19 @@ const data = {
         />
       ),
     },
-    {
-      name: "AI Insights",
-      url: "#",
-      icon: (
-        <FileIcon
-        />
-      ),
-    },
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  activePage,
+  onPageChange,
+  onQuickCreate,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  activePage?: string
+  onPageChange?: (page: string) => void
+  onQuickCreate?: () => void
+}) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -184,7 +201,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <a href="#">
+              <a href="/admin/dashboard">
                 <CommandIcon className="size-5!" />
                 <span className="text-base font-semibold">AtriFex Forge</span>
               </a>
@@ -193,8 +210,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
+        <NavMain
+          items={data.navMain}
+          activeItem={activePage}
+          onSelect={onPageChange}
+          onQuickCreate={onQuickCreate}
+        />
+        <NavDocuments
+          items={data.documents}
+          activeItem={activePage}
+          onSelect={onPageChange}
+        />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
